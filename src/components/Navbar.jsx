@@ -1,8 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 
-export default function Navbar() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export default function Navbar({ isAuthenticated, setIsAuthenticated }) {
   const navigate = useNavigate();
 
   const linkClass = ({ isActive }) => 
