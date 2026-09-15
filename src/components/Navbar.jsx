@@ -1,6 +1,6 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 
-export default function Navbar({ isAuthenticated, setIsAuthenticated }) {
+export default function Navbar({ isAuthenticated, setIsAuthenticated, setMovieList }) {
   const navigate = useNavigate();
 
   const linkClass = ({ isActive }) => 
@@ -9,11 +9,12 @@ export default function Navbar({ isAuthenticated, setIsAuthenticated }) {
       : "text-stream-foam hover:text-stream-aqua transition-colors flex items-center gap-1";
 
   const handleSignOut = () => {
-    // This is where the login stuff will go
-    console.log("User signed out");
+    setIsAuthenticated(false);
+    setMovieList([]);
+    console.log("User signed out and list cleared");
     navigate('/login');
   };
-
+  
   return (
     <nav className="bg-stream-deep p-4 shadow-md relative z-20">
       <div className="w-full px-8 flex justify-between items-center">
@@ -52,12 +53,20 @@ export default function Navbar({ isAuthenticated, setIsAuthenticated }) {
               </button>
             </>
           ) : (
-            <NavLink 
-              to="/login" 
-              className="bg-stream-aqua hover:bg-stream-aqua/80 text-stream-deep font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
-            >
-              <span className="material-symbols-rounded">login</span> Sign In
-            </NavLink>
+            <div className="flex items-center gap-3">
+              <NavLink 
+                to="/login" 
+                className="text-stream-foam hover:text-stream-aqua transition-colors font-semibold flex items-center gap-1"
+              >
+                Sign In
+              </NavLink>
+              <NavLink 
+                to="/register" 
+                className="bg-stream-aqua hover:bg-stream-aqua/80 text-stream-deep font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+              >
+                <span className="material-symbols-rounded">person_add</span> Register
+              </NavLink>
+            </div>
           )}
         </div>
       </div>

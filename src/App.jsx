@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
@@ -6,13 +6,25 @@ export default function App() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const [movieList, setMovieList] = useState(() => {
+    const saved = localStorage.getItem('myStreamList');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('myStreamList', JSON.stringify(movieList));
+  }, [movieList]);
+
   return (
     <div className="min-h-screen bg-stream-foam relative overflow-hidden">
       
-      <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
+      <Navbar 
+  isAuthenticated={isAuthenticated} 
+  setIsAuthenticated={setIsAuthenticated} 
+  setMovieList={setMovieList} />
       
       <main className="max-w-6xl mx-auto relative z-10 p-8">
-        <Outlet context={{ isAuthenticated }} />
+        <Outlet context={{ isAuthenticated, setIsAuthenticated, movieList, setMovieList }} />
       </main>
 
       <div className="absolute bottom-0 left-0 w-[200%] flex z-0 opacity-40 pointer-events-none animate-[wave_15s_linear_infinite]">

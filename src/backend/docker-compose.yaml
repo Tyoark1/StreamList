@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: streamlist_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: gergdfgwrtdg24543637@$353GDFG
+      MYSQL_DATABASE: streamlist_db
+      MYSQL_USER: streamlist_user
+      MYSQL_PASSWORD: 1234njwf9q0e9r08g#@#%
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  db_data:

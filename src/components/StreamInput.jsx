@@ -3,14 +3,19 @@ import { useOutletContext } from 'react-router-dom';
 
 export default function StreamInput() { 
 
-  const { isAuthenticated } = useOutletContext();
+  const { isAuthenticated, movieList, setMovieList } = useOutletContext();
   const [movieInput, setMovieInput] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!movieInput.trim()) return;
-    console.log("New StreamList Item:", movieInput);
+    
+    setMovieList([...movieList, movieInput.trim()]);
     setMovieInput('');
+  };
+
+  const handleDelete = (indexToRemove) => {
+    setMovieList(movieList.filter((_, index) => index !== indexToRemove));
   };
 
   return (
@@ -26,7 +31,7 @@ export default function StreamInput() {
           : 'Search and see if your favorite movie could flow down your stream today.'}
       </p>
 
-      <form onSubmit={handleSubmit} className="flex gap-4">
+      <form onSubmit={handleSubmit} className="flex gap-4 mb-8">
         <input 
           type="text" 
           value={movieInput}
@@ -41,6 +46,22 @@ export default function StreamInput() {
           {isAuthenticated ? '+ Add' : 'Search'}
         </button>
       </form>
+      
+      {movieList && movieList.length > 0 && (
+        <ul className="space-y-3">
+          {movieList.map((movie, index) => (
+            <li key={index} className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <span className="text-[#001F3F] font-medium">{movie}</span>
+              <button 
+                onClick={() => handleDelete(index)}
+                className="text-red-500 hover:text-red-700 font-semibold text-sm transition-colors flex items-center gap-1"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       
     </div>
   );
