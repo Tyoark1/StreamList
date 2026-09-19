@@ -19,24 +19,30 @@ export default function Navbar({ isAuthenticated, setIsAuthenticated, setMovieLi
     <nav className="bg-stream-deep p-4 shadow-md relative z-20">
       <div className="w-full px-8 flex justify-between items-center">
         
-        <div className="text-stream-foam font-extrabold text-2xl flex items-center gap-2">
+        <Link to="/" className="text-stream-foam font-extrabold text-2xl flex items-center gap-2 hover:text-stream-aqua transition-colors">
           <span className="material-symbols-rounded text-stream-aqua text-3xl">water_drop</span>
           StreamList
-        </div>
+        </Link>
 
         <div className="flex gap-6 items-center">
-          <NavLink to="/" className={linkClass}>
-            <span className="material-symbols-rounded">list_alt</span> List
-          </NavLink>
-          <NavLink to="/movies" className={linkClass}>
-            <span className="material-symbols-rounded">movie</span> Movies
-          </NavLink>
-          <NavLink to="/cart" className={linkClass}>
-            <span className="material-symbols-rounded">shopping_cart</span> Cart
-          </NavLink>
+          
           <NavLink to="/about" className={linkClass}>
             <span className="material-symbols-rounded">info</span> About
           </NavLink>
+
+          {isAuthenticated && (
+            <>
+              <NavLink to="/" className={linkClass}>
+                <span className="material-symbols-rounded">list_alt</span> List
+              </NavLink>
+              <NavLink to="/movies" className={linkClass}>
+                <span className="material-symbols-rounded">movie</span> Movies
+              </NavLink>
+              <NavLink to="/cart" className={linkClass}>
+                <span className="material-symbols-rounded">shopping_cart</span> Cart
+              </NavLink>
+            </>
+          )}
 
           <div className="w-px h-6 bg-stream-foam/20 mx-2"></div>
 

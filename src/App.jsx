@@ -3,28 +3,42 @@ import { Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
 export default function App() {
-
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const [movieList, setMovieList] = useState(() => {
-    const saved = localStorage.getItem('myStreamList');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  const [movieList, setMovieList] = useState([]); 
 
   useEffect(() => {
-    localStorage.setItem('myStreamList', JSON.stringify(movieList));
-  }, [movieList]);
+    if (isAuthenticated && currentUser) {
+      const fetchMovies = async () => {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/api/movies/${currentUser.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setMovieList(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch movie list:", error);
+        }
+      };
+
+      fetchMovies();
+    } else {
+      setMovieList([]); 
+    }
+  }, [isAuthenticated, currentUser]);
 
   return (
     <div className="min-h-screen bg-stream-foam relative overflow-hidden">
-      
+
       <Navbar 
-  isAuthenticated={isAuthenticated} 
-  setIsAuthenticated={setIsAuthenticated} 
-  setMovieList={setMovieList} />
-      
+        isAuthenticated={isAuthenticated} 
+        setIsAuthenticated={setIsAuthenticated} 
+        setMovieList={setMovieList} 
+      />
+
       <main className="max-w-6xl mx-auto relative z-10 p-8">
-        <Outlet context={{ isAuthenticated, setIsAuthenticated, movieList, setMovieList }} />
+        <Outlet context={{ isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, movieList, setMovieList }} />
       </main>
 
       <div className="absolute bottom-0 left-0 w-[200%] flex z-0 opacity-40 pointer-events-none animate-[wave_15s_linear_infinite]">

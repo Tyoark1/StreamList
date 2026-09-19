@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useOutletContext, useNavigate, Link } from 'react-router-dom';
 
 export default function Login() {
-  const { setIsAuthenticated } = useOutletContext();
+  const { setIsAuthenticated, setCurrentUser } = useOutletContext();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +18,13 @@ export default function Login() {
         });
 
         if (response.ok) {
+          const data = await response.json();
+          
+          setCurrentUser({
+            id: data.id, 
+            email: data.email
+          });
+
           setIsAuthenticated(true);
           navigate('/'); 
         } else {
@@ -31,7 +38,7 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md border border-gray-100 mt-10">
-      <h2 className="text-2xl font-bold text-[#001F3F] mb-6">Sign In to StreamList</h2>
+      <h2 className="text-2xl font-bold text-stream-deep mb-6">Sign In to StreamList</h2>
       
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
         <input 
@@ -39,7 +46,7 @@ export default function Login() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email address" 
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00E5FF]"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stream-aqua"
           required
         />
         <input 
@@ -47,12 +54,12 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password" 
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00E5FF]"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stream-aqua"
           required
         />
         <button 
           type="submit" 
-          className="w-full py-2 bg-[#00E5FF] text-[#001F3F] font-bold rounded-lg hover:bg-[#00B3CC] transition-colors mt-2"
+          className="w-full py-2 bg-stream-aqua text-stream-deep font-bold rounded-lg hover:bg-stream-aqua/80 transition-colors mt-2"
         >
           Sign In
         </button>

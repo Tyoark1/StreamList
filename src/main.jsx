@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App.jsx';
-import Register from './pages/Register.jsx';
 import './index.css';
 
 // Page Imports
@@ -13,24 +12,16 @@ import About from './pages/About.jsx';
 import Login from './pages/Login.jsx';
 import Account from './pages/Account.jsx';
 import Checkout from './pages/Checkout.jsx';
+import Register from './pages/Register.jsx';
+
+// Component Imports
+import ProtectedRoute from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-      {
-        path: "/",
-        element: <StreamList />,
-      },
-      {
-        path: "/movies",
-        element: <Movies />,
-      },
-      {
-        path: "/cart",
-        element: <Cart />,
-      },
       {
         path: "/about",
         element: <About />,
@@ -40,17 +31,35 @@ const router = createBrowserRouter([
         element: <Login />,
       },
       {
-        path: "/account",
-        element: <Account />,
-      },
-      {
-        path: "/checkout",
-        element: <Checkout />,
-      },
-      {
-        path: "register",
+        path: "/register",
         element: <Register />, 
-      }
+      },
+
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: "/",
+            element: <StreamList />,
+          },
+          {
+            path: "/movies",
+            element: <Movies />,
+          },
+          {
+            path: "/cart",
+            element: <Cart />,
+          },
+          {
+            path: "/account",
+            element: <Account />,
+          },
+          {
+            path: "/checkout",
+            element: <Checkout />,
+          },
+        ],
+      },
     ],
   },
 ]);

@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 
 export default function Movies() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
+  
+  const { movieList, setMovieList, currentUser } = useOutletContext();
 
   const searchMovies = async (e) => {
     e.preventDefault();
@@ -20,10 +23,47 @@ export default function Movies() {
     }
   };
 
+  const handleAddToList = async (movieTitle) => {
+    if (movieList && movieList.includes(movieTitle)) {
+      alert(`${movieTitle} is already in your list!`);
+      return;
+    }
+
+    if (!currentUser) {
+      alert("Please log in to save movies to your list.");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/add-movie', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          movie_title: movieTitle
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setMovieList([...(movieList || []), movieTitle]);
+      alert(`${movieTitle} added to your StreamList!`);
+      
+    } catch (error) {
+      console.error("There was an error saving this movie to the database:", error);
+      alert("There was an error saving this movie. Please try again.");
+    }
+  };
+
   return (
     <div className="bg-white p-8 rounded-xl shadow-md border border-gray-100 min-h-[500px]">
-      <h2 className="text-3xl font-bold text-[#001F3F] mb-6 flex items-center gap-2">
-        <span className="material-symbols-rounded text-[#00E5FF]">movie</span>
+      
+      <h2 className="text-3xl font-bold text-stream-deep mb-6 flex items-center gap-2">
+        <span className="material-symbols-rounded text-stream-aqua">movie</span>
         Movie Database
       </h2>
 
@@ -32,30 +72,37 @@ export default function Movies() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search TMDB for a movie..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00E5FF]"
+          placeholder="Search the database for your must-watch movies."
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stream-aqua"
         />
-        <button type="submit" className="px-6 py-2 bg-[#001F3F] text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
+        <button type="submit" className="px-6 py-2 bg-stream-deep text-white font-semibold rounded-lg hover:bg-stream-deep/80 transition-colors">
           Search
         </button>
       </form>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {results.map((movie) => (
-          <div key={movie.id} className="flex flex-col items-center text-center">
+          <div key={movie.id} className="relative group">
+            
             {movie.poster_path ? (
               <img 
-                src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`} 
-                alt={movie.title} 
-                className="rounded-lg shadow-sm mb-2"
+                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} 
+                alt={movie.title}
+                onClick={() => handleAddToList(movie.title)}
+                className="w-full h-auto rounded-lg shadow-md cursor-pointer transition-transform duration-200 group-hover:scale-105 group-hover:ring-4 group-hover:ring-stream-aqua"
               />
             ) : (
-              <div className="w-[200px] h-[300px] bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-                No Image
+              <div 
+                onClick={() => handleAddToList(movie.title)}
+                className="w-full h-[300px] bg-gray-200 rounded-lg shadow-md flex items-center justify-center cursor-pointer transition-transform duration-200 group-hover:scale-105 group-hover:ring-4 group-hover:ring-stream-aqua"
+              >
+                <span className="text-gray-400 text-sm p-4 text-center">No Poster Available</span>
               </div>
             )}
-            <span className="font-semibold text-gray-800 text-sm">{movie.title}</span>
-            <span className="text-xs text-gray-500">{movie.release_date?.substring(0, 4)}</span>
+            
+            <p className="mt-2 text-center text-sm font-semibold text-stream-deep">
+              {movie.title}
+            </p>
           </div>
         ))}
       </div>
