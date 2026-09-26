@@ -38,19 +38,30 @@ class MovieRequest(BaseModel):
     user_id: int
     movie_title: str
 
+class EditMovieRequest(BaseModel):
+    user_id: int
+    old_title: str
+    new_title: str
+
+class CompleteRequest(BaseModel):
+    user_id: int
+    movie_title: str
+    completed: bool
+
 @app.get("/api/movies/{user_id}")
 async def get_user_movies(user_id: int):
     db = get_db_connection()
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True) 
     
     try:
-        sql = "SELECT movie_title FROM saved_movies WHERE user_id = %s"
+        sql = "SELECT movie_title as title, completed FROM saved_movies WHERE user_id = %s"
         cursor.execute(sql, (user_id,))
         results = cursor.fetchall()
         
-        movie_list = [row[0] for row in results]
-        
-        return movie_list
+        for row in results:
+            row['completed'] = bool(row['completed'])
+            
+        return results
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -73,7 +84,7 @@ async def register_user(user: UserRegister):
         cursor.execute(sql, val)
         db.commit()
         
-        return {"message": "User securely registered!"}
+        return {"message": "User registered!"}
     
     except mysql.connector.IntegrityError:
         db.rollback()
@@ -120,6 +131,42 @@ async def add_movie_to_list(movie: MovieRequest):
         
         return {"message": "Movie saved successfully!"}
     
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        db.close()
+
+@app.put("/api/edit-movie")
+async def edit_movie_in_list(movie: EditMovieRequest):
+    db = get_db_connection()
+    cursor = db.cursor()
+    
+    try:
+        sql = "UPDATE saved_movies SET movie_title = %s WHERE user_id = %s AND movie_title = %s"
+        cursor.execute(sql, (movie.new_title, movie.user_id, movie.old_title))
+        db.commit()
+        
+        return {"message": "Movie updated successfully!"}
+    
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        db.close()
+
+@app.put("/api/toggle-complete")
+async def toggle_movie_complete(movie: CompleteRequest):
+    db = get_db_connection()
+    cursor = db.cursor()
+    
+    try:
+        sql = "UPDATE saved_movies SET completed = %s WHERE user_id = %s AND movie_title = %s"
+        cursor.execute(sql, (movie.completed, movie.user_id, movie.movie_title))
+        db.commit()
+        return {"message": "Completion status updated!"}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

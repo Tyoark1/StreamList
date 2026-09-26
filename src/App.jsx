@@ -28,6 +28,14 @@ export default function App() {
     }
   }, [isAuthenticated, currentUser]);
 
+  useEffect(() => {
+    if (movieList && movieList.length > 0) {
+      localStorage.setItem('streamlist_local_backup', JSON.stringify(movieList));
+    } else if (movieList && movieList.length === 0 && isAuthenticated) {
+      localStorage.removeItem('streamlist_local_backup');
+    }
+  }, [movieList, isAuthenticated]);
+
   return (
     <div className="min-h-screen bg-stream-foam relative overflow-hidden">
 
