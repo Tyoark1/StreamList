@@ -13,6 +13,7 @@ import Login from './pages/Login.jsx';
 import Account from './pages/Account.jsx';
 import Checkout from './pages/Checkout.jsx';
 import Register from './pages/Register.jsx';
+import Subscriptions from './pages/Subscriptions.jsx';
 
 // Component Imports
 import ProtectedRoute from './components/ProtectedRoute';
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
           {
             path: "/movies",
             element: <Movies />,
+          },
+          {
+            path: "/Subscriptions",
+            element: <Subscriptions />,
           },
           {
             path: "/cart",

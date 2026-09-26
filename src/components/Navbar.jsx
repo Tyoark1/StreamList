@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 
-export default function Navbar({ isAuthenticated, setIsAuthenticated, setMovieList }) {
+export default function Navbar({ isAuthenticated, setIsAuthenticated, setMovieList, cart }) {
   const navigate = useNavigate();
 
   const linkClass = ({ isActive }) => 
@@ -14,6 +14,8 @@ export default function Navbar({ isAuthenticated, setIsAuthenticated, setMovieLi
     console.log("User signed out and list cleared");
     navigate('/login');
   };
+
+  const cartItemCount = cart?.reduce((total, item) => total + item.quantity, 0) || 0;
   
   return (
     <nav className="bg-stream-deep p-4 shadow-md relative z-20">
@@ -38,8 +40,19 @@ export default function Navbar({ isAuthenticated, setIsAuthenticated, setMovieLi
               <NavLink to="/movies" className={linkClass}>
                 <span className="material-symbols-rounded">movie</span> Movies
               </NavLink>
+              <NavLink to="/subscriptions" className={linkClass}>
+                <span className="material-symbols-rounded">store</span> Subscriptions
+              </NavLink>
               <NavLink to="/cart" className={linkClass}>
-                <span className="material-symbols-rounded">shopping_cart</span> Cart
+                <div className="relative flex items-center">
+                  <span className="material-symbols-rounded">shopping_cart</span>
+                  <span className="ml-1">Cart</span>
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-2 -right-4 bg-stream-aqua text-stream-deep text-xs font-bold px-1.5 py-0.5 rounded-full">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </div>
               </NavLink>
             </>
           )}

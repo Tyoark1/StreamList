@@ -7,6 +7,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   
   const [movieList, setMovieList] = useState([]); 
+  const [cart, setCart] = useState([]);
 
   useEffect(() => {
     if (isAuthenticated && currentUser) {
@@ -43,10 +44,11 @@ export default function App() {
         isAuthenticated={isAuthenticated} 
         setIsAuthenticated={setIsAuthenticated} 
         setMovieList={setMovieList} 
+        cart={cart}
       />
 
       <main className="max-w-6xl mx-auto relative z-10 p-8">
-        <Outlet context={{ isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, movieList, setMovieList }} />
+        <Outlet context={{ isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, movieList, setMovieList, cart, setCart }} />
       </main>
 
       <div className="absolute bottom-0 left-0 w-[200%] flex z-0 opacity-40 pointer-events-none animate-[wave_15s_linear_infinite]">
