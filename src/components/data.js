@@ -1,11 +1,11 @@
 // src/data.js
 const list = [
-        {
+      {
           id: 1,
           service: "Basic Subscription",
           serviceInfo: "For one User",
           price: 4.99,
-          img: "https://creazilla-store.fra1.digitaloceanspaces.com/icons/3231802/ticket-icon-md.png",
+          img: "https://anyplaceholder.com/placeholder?width=400&height=400&bg=c0c0c0&color=0f2537&text=Basic&fontSize=90&format=png",
           amount: 1,
         },
         {
@@ -13,7 +13,7 @@ const list = [
           service: "Gold Subscription",
           serviceInfo: "Share with Family",
           price: 9.99,
-          img: "https://creazilla-store.fra1.digitaloceanspaces.com/icons/3237088/ticket-icon-md.png",
+          img: "https://anyplaceholder.com/placeholder?width=400&height=400&bg=ffd700&color=0f2537&text=Gold&fontSize=90&format=png",
           amount: 1,
         },
         {
@@ -21,7 +21,7 @@ const list = [
           service: "Premium Subscription",
           serviceInfo: "Share with the World",
           price: 12.99,
-          img: "https://creazilla-store.fra1.digitaloceanspaces.com/icons/3258730/ticket-icon-md.png",
+          img: "https://anyplaceholder.com/placeholder?width=400&height=400&bg=e5e4e2&color=0f2537&text=Premium&fontSize=90&format=png",
           amount: 1,
         },
         {
@@ -29,7 +29,7 @@ const list = [
           service: "Social Media Sharing Subscription",
           serviceInfo: "Share your list",
           price: 2.99,
-          img: "https://cdn.creazilla.com/photos/3730387/social-media-1908766_1280-photo-md.jpeg",
+          img: "https://anyplaceholder.com/placeholder?width=400&height=400&bg=00b4d8&color=0f2537&text=Social&fontSize=90&format=png",
           amount: 1,
         },
         {
