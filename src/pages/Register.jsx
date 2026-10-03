@@ -1,6 +1,11 @@
 import { useState } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Register() {
+  const { setIsAuthenticated, setCurrentUser } = useOutletContext();
+  const navigate = useNavigate();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -31,9 +36,35 @@ export default function Register() {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        setCurrentUser({
+          id: data.id, 
+          email: data.email
+        });
+        setIsAuthenticated(true);
+        navigate('/'); 
+      } else {
+        const data = await response.json();
+        setMessage(data.detail || "Google registration failed");
+      }
+    } catch (error) {
+      setMessage("Server connection error.");
+    }
+  };
+
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md border border-gray-100 mt-10">
-      <h2 className="text-2xl font-bold text-[#001F3F] mb-6 text-center">Create Account</h2>
+      <h2 className="text-2xl font-bold text-[#001F3F] mb-6 text-center">Register a New Account</h2>
       
       <form onSubmit={handleRegister} className="flex flex-col gap-4">
         <input
@@ -59,6 +90,20 @@ export default function Register() {
           Sign Up
         </button>
       </form>
+
+      <div className="flex items-center my-6">
+        <div className="flex-grow border-t border-gray-200"></div>
+        <span className="mx-4 text-gray-400 text-sm">or sign up with</span>
+        <div className="flex-grow border-t border-gray-200"></div>
+      </div>
+
+      <div className="flex justify-center mb-2">
+        <GoogleLogin 
+          onSuccess={handleGoogleSuccess} 
+          onError={() => setMessage('Google login widget failed to load')}
+          useOneTap={false}
+        />
+      </div>
 
       {message && (
         <p className="mt-4 text-center font-semibold text-gray-700">{message}</p>

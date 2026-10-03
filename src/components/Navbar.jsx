@@ -1,7 +1,8 @@
-import { NavLink, useNavigate, Link } from 'react-router-dom';
+import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 
 export default function Navbar({ isAuthenticated, setIsAuthenticated, setMovieList, cart }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const linkClass = ({ isActive }) => 
     isActive 
@@ -73,18 +74,23 @@ export default function Navbar({ isAuthenticated, setIsAuthenticated, setMovieLi
             </>
           ) : (
             <div className="flex items-center gap-3">
-              <NavLink 
-                to="/login" 
-                className="text-stream-foam hover:text-stream-aqua transition-colors font-semibold flex items-center gap-1"
-              >
-                Sign In
-              </NavLink>
-              <NavLink 
-                to="/register" 
-                className="bg-stream-aqua hover:bg-stream-aqua/80 text-stream-deep font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
-              >
-                <span className="material-symbols-rounded">person_add</span> Register
-              </NavLink>
+              {location.pathname !== '/login' && (
+                <NavLink 
+                  to="/login" 
+                  className="text-stream-foam hover:text-stream-aqua transition-colors font-semibold flex items-center gap-1"
+                >
+                  Sign In
+                </NavLink>
+              )}
+
+              {location.pathname !== '/register' && (
+                <NavLink 
+                  to="/register" 
+                  className="bg-stream-aqua hover:bg-stream-aqua/80 text-stream-deep font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                >
+                  <span className="material-symbols-rounded">person_add</span> Register
+                </NavLink>
+              )}
             </div>
           )}
         </div>

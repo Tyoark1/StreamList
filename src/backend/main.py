@@ -4,6 +4,8 @@ from contextlib import contextmanager
 
 import bcrypt
 import mysql.connector
+from google.oauth2 import id_token
+from google.auth.transport import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +36,7 @@ MAX_PASSWORD_BYTES = 72
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 def validate_email(email: str) -> str:
     email = email.strip()
@@ -99,6 +102,9 @@ class CompleteRequest(BaseModel):
     movie_title: str = Field(min_length=1)
     completed: bool
 
+class GoogleToken(BaseModel):
+    token: str
+
 
 @app.get("/api/movies/{user_id}")
 def get_user_movies(user_id: int):
@@ -115,6 +121,102 @@ def get_user_movies(user_id: int):
         row["completed"] = bool(row["completed"])
 
     return results
+
+OAUTH_USER_PASSWORD_HASH = "!OAUTH_USER"
+
+
+@app.post("/auth/google")
+def google_auth_login(payload: GoogleToken):
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(
+            status_code=500,
+            detail="Google sign-in is not configured on the server",
+        )
+
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            payload.token,
+            requests.Request(),
+            GOOGLE_CLIENT_ID,
+        )
+    except ValueError as e:
+        # Expired, malformed, wrong audience, wrong issuer, bad signature.
+        raise HTTPException(status_code=401, detail="Invalid Google token") from e
+    except Exception as e:
+        # Network failure reaching Google's tokeninfo endpoint.
+        raise HTTPException(
+            status_code=503, detail="Could not verify Google token"
+        ) from e
+
+    email = idinfo.get("email")
+    google_id = idinfo.get("sub")
+
+    if not email or not google_id:
+        raise HTTPException(status_code=401, detail="Incomplete Google token claims")
+    if not idinfo.get("email_verified"):
+        raise HTTPException(status_code=401, detail="Google email is not verified")
+
+    email = validate_email(email)
+
+    with db_cursor(dictionary=True) as (db, cursor):
+        try:
+            cursor.execute(
+                "SELECT id, google_id, password_hash FROM users WHERE email = %s",
+                (email,),
+            )
+            user = cursor.fetchone()
+
+            if user is None:
+                cursor.execute(
+                    "INSERT INTO users (email, password_hash, google_id) "
+                    "VALUES (%s, %s, %s)",
+                    (email, OAUTH_USER_PASSWORD_HASH, google_id),
+                )
+                user_id = cursor.lastrowid
+            else:
+                user_id = user["id"]
+                linked_google_id = user["google_id"]
+
+                if linked_google_id and linked_google_id != google_id:
+                    # The email already exists as a different (or local)
+                    # account. Refuse rather than silently hijack it.
+                    raise HTTPException(
+                        status_code=409,
+                        detail="An account with this email already exists",
+                    )
+
+                if linked_google_id is None:
+                    # Only link the first time, and never overwrite an
+                    # existing local password with the OAuth sentinel.
+                    if not user["password_hash"]:
+                        cursor.execute(
+                            "UPDATE users SET google_id = %s, password_hash = %s "
+                            "WHERE id = %s",
+                            (google_id, OAUTH_USER_PASSWORD_HASH, user_id),
+                        )
+                    else:
+                        cursor.execute(
+                            "UPDATE users SET google_id = %s WHERE id = %s",
+                            (google_id, user_id),
+                        )
+
+            db.commit()
+        except HTTPException:
+            db.rollback()
+            raise
+        except mysql.connector.IntegrityError as e:
+            # Lost a race against a concurrent sign-up for the same email.
+            db.rollback()
+            raise HTTPException(
+                status_code=409, detail="Account already exists"
+            ) from e
+        except mysql.connector.Error as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=500, detail="Database connection error"
+            ) from e
+
+    return {"id": user_id, "email": email, "message": "Login successful"}
 
 @app.post("/register")
 def register_user(user: UserRegister):
@@ -153,7 +255,17 @@ def login_user(user: UserLogin):
 
         # Identical response for unknown email and bad password so the endpoint
         # cannot be used to enumerate registered accounts.
-        if result is None or not bcrypt.checkpw(encoded, result["password_hash"].encode("utf-8")):
+        valid = False
+        if result is not None:
+            stored_hash = result["password_hash"]
+            if stored_hash != OAUTH_USER_PASSWORD_HASH:
+                try:
+                    valid = bcrypt.checkpw(encoded, stored_hash.encode("utf-8"))
+                except ValueError:
+                    # Malformed hash in the database.
+                    valid = False
+
+        if not valid:
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         user_id = result["id"]
