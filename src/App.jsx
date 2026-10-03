@@ -1,54 +1,85 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  
-  const [movieList, setMovieList] = useState([]); 
-  const [cart, setCart] = useState([]);
+
+  const [movieList, setMovieList] = useState([]);
+
+  // Exposed list: cleared automatically while there is no logged-in user.
+  const visibleMovieList = useMemo(
+    () => (isAuthenticated && currentUser ? movieList : []),
+    [isAuthenticated, currentUser, movieList]
+  );
+
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('cartItems');
+      const parsed = savedCart ? JSON.parse(savedCart) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error("Failed to parse saved cart:", error);
+      localStorage.removeItem('cartItems');
+      return [];
+    }
+  });
 
   useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    let cancelled = false;
+
     if (isAuthenticated && currentUser) {
       const fetchMovies = async () => {
         try {
           const response = await fetch(`http://127.0.0.1:8000/api/movies/${currentUser.id}`);
-          if (response.ok) {
-            const data = await response.json();
-            setMovieList(data);
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
+          const data = await response.json();
+          if (!cancelled) {
+            setMovieList(Array.isArray(data) ? data : []);
           }
         } catch (error) {
-          console.error("Failed to fetch movie list:", error);
+          if (!cancelled) {
+            console.error("Failed to fetch movie list:", error);
+            setMovieList([]);
+          }
         }
       };
 
       fetchMovies();
-    } else {
-      setMovieList([]); 
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated, currentUser]);
 
   useEffect(() => {
-    if (movieList && movieList.length > 0) {
-      localStorage.setItem('streamlist_local_backup', JSON.stringify(movieList));
-    } else if (movieList && movieList.length === 0 && isAuthenticated) {
+    if (visibleMovieList.length > 0) {
+      localStorage.setItem('streamlist_local_backup', JSON.stringify(visibleMovieList));
+    } else if (visibleMovieList.length === 0 && isAuthenticated) {
       localStorage.removeItem('streamlist_local_backup');
     }
-  }, [movieList, isAuthenticated]);
+  }, [visibleMovieList, isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-stream-foam relative overflow-hidden">
 
-      <Navbar 
-        isAuthenticated={isAuthenticated} 
-        setIsAuthenticated={setIsAuthenticated} 
-        setMovieList={setMovieList} 
+      <Navbar
+        isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
+        setMovieList={setMovieList}
         cart={cart}
       />
 
       <main className="max-w-6xl mx-auto relative z-10 p-8">
-        <Outlet context={{ isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, movieList, setMovieList, cart, setCart }} />
+        <Outlet context={{ isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, movieList: visibleMovieList, setMovieList, cart, setCart }} />
       </main>
 
       <div className="absolute bottom-0 left-0 w-[200%] flex z-0 opacity-40 pointer-events-none animate-[wave_15s_linear_infinite]">
