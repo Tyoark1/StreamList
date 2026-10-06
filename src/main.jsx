@@ -4,7 +4,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App.jsx';
 import './index.css';
 
-// Page Imports
 import StreamList from './pages/StreamList.jsx';
 import Movies from './pages/Movies.jsx';
 import Cart from './pages/Cart.jsx';
@@ -15,7 +14,6 @@ import Checkout from './pages/Checkout.jsx';
 import Register from './pages/Register.jsx';
 import Subscriptions from './pages/Subscriptions.jsx';
 
-// Component Imports
 import ProtectedRoute from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
@@ -48,7 +46,7 @@ const router = createBrowserRouter([
             element: <Movies />,
           },
           {
-            path: "/Subscriptions",
+            path: "/subscriptions",
             element: <Subscriptions />,
           },
           {
@@ -68,6 +66,14 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('Service Worker registered successfully.', reg.scope))
+      .catch((err) => console.error('Service Worker registration failed:', err));
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

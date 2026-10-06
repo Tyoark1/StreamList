@@ -1,4 +1,4 @@
-import { useOutletContext, Link } from 'react-router-dom';
+  import { useOutletContext, Link } from 'react-router-dom';
 
 export default function Cart() {
   const { cart, setCart } = useOutletContext();
