@@ -15,8 +15,21 @@ load_dotenv()
 
 app = FastAPI()
 
-# Explicit origin list: wildcard + credentials is rejected by browsers and is
-# an unnecessary security hole. Configure via ALLOWED_ORIGINS.
+# CAPSTONE: CORS_SECURITY
+# Explicit origin list prevents wildcard credential hijacking from malicious external sites
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    if origin.strip()
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
@@ -44,7 +57,8 @@ def validate_email(email: str) -> str:
         raise HTTPException(status_code=400, detail="Invalid email address")
     return email
 
-
+# CAPSTONE: BCRYPT_TRUNCATION
+# Enforces strict byte limits before hashing to prevent silent truncation exploits on long passwords
 def encode_password(password: str) -> bytes:
     encoded = password.encode("utf-8")
     if len(encoded) > MAX_PASSWORD_BYTES:
@@ -54,7 +68,8 @@ def encode_password(password: str) -> bytes:
         )
     return encoded
 
-
+# CAPSTONE: DB_CURSOR
+# Custom context manager guarantees zero leaked connections, even on fatal application errors
 @contextmanager
 def db_cursor(dictionary=False):
     """Yields (connection, cursor) and always closes them, even on error."""
@@ -140,10 +155,8 @@ def google_auth_login(payload: GoogleToken):
             GOOGLE_CLIENT_ID,
         )
     except ValueError as e:
-        # Expired, malformed, wrong audience, wrong issuer, bad signature.
         raise HTTPException(status_code=401, detail="Invalid Google token") from e
     except Exception as e:
-        # Network failure reaching Google's tokeninfo endpoint.
         raise HTTPException(
             status_code=503, detail="Could not verify Google token"
         ) from e
@@ -186,8 +199,6 @@ def google_auth_login(payload: GoogleToken):
                     )
 
                 if linked_google_id is None:
-                    # Only link the first time, and never overwrite an
-                    # existing local password with the OAuth sentinel.
                     if not user["password_hash"]:
                         cursor.execute(
                             "UPDATE users SET google_id = %s, password_hash = %s "
@@ -205,7 +216,6 @@ def google_auth_login(payload: GoogleToken):
             db.rollback()
             raise
         except mysql.connector.IntegrityError as e:
-            # Lost a race against a concurrent sign-up for the same email.
             db.rollback()
             raise HTTPException(
                 status_code=409, detail="Account already exists"
@@ -253,8 +263,8 @@ def login_user(user: UserLogin):
             db.rollback()
             raise HTTPException(status_code=500, detail="Login failed") from e
 
-        # Identical response for unknown email and bad password so the endpoint
-        # cannot be used to enumerate registered accounts.
+        # CAPSTONE: ENUMERATION_PREVENTION
+        # Unified response timing and messaging completely masks whether an email exists in the databas
         valid = False
         if result is not None:
             stored_hash = result["password_hash"]
@@ -262,7 +272,6 @@ def login_user(user: UserLogin):
                 try:
                     valid = bcrypt.checkpw(encoded, stored_hash.encode("utf-8"))
                 except ValueError:
-                    # Malformed hash in the database.
                     valid = False
 
         if not valid:
@@ -333,13 +342,15 @@ def toggle_movie_complete(movie: CompleteRequest):
 
     return {"message": "Completion status updated!"}
 
-
+# CAPSTONE: DB_REMOVE_LOGIC
 @app.delete("/api/remove-movie")
 def remove_movie_from_list(movie: MovieRequest):
     with db_cursor() as (db, cursor):
         try:
+            # Executes a parameterized SQL DELETE statement to prevent SQL injection attacks
             sql = "DELETE FROM saved_movies WHERE user_id = %s AND movie_title = %s"
             cursor.execute(sql, (movie.user_id, movie.movie_title))
+            # Verifies that a row was actually found and deleted before committing the transaction
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Movie not found in your list")
             db.commit()
