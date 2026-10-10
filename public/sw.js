@@ -21,11 +21,15 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// CAPSTONE: SERVICE_WORKER_FETCH
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
+  // Checks if the request is an API call (Backend or TMDB)
   if (url.origin.includes('localhost:8000') || url.origin.includes('api.themoviedb.org')) {
     event.respondWith(
+      // Network-first strategy: Tries the live server first, clones the response to the dynamic cache, 
+      // and falls back to the cache if the user is offline.
       fetch(event.request)
         .then((response) => {
           const clonedResponse = response.clone();
@@ -35,6 +39,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => caches.match(event.request))
     );
   } else {
+    // Cache-first strategy for static UI assets
     event.respondWith(
       caches.match(event.request).then((cached) => cached || fetch(event.request))
     );

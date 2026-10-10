@@ -7,12 +7,13 @@ export default function Account() {
   
   const [activePlan, setActivePlan] = useState('Free Tier');
 
+  // CAPSTONE: TIER_HYDRATION
   useEffect(() => {
     const cardData = localStorage.getItem('streamlist_saved_card');
     if (cardData) {
       setSavedCard(JSON.parse(cardData));
     }
-    
+    // Dynamically reads the active plan processed by the Checkout pipeline
     const savedPlan = localStorage.getItem('streamlist_active_plan');
     if (savedPlan) {
       setActivePlan(savedPlan);

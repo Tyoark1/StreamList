@@ -9,11 +9,13 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-
+  
+  // CAPSTONE: REGISTER_SUBMIT
   const handleRegister = async (e) => {
     e.preventDefault();
     
     try {
+      // Backend handles email validation and prevents duplicate user IntegrityErrors
       const response = await fetch("http://127.0.0.1:8000/register", {
         method: "POST",
         headers: {

@@ -9,17 +9,20 @@ export default function Movies() {
   
   const { movieList, setMovieList, currentUser } = useOutletContext();
 
+  // CAPSTONE: TMDB_API_QUERY
   const searchMovies = async (e) => {
     e.preventDefault();
     if (!query) return;
 
+    // Constructs the URL by injecting the search term and the secure environment API key
     const apiKey = import.meta.env.VITE_TMDB_API_KEY; 
     const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}&language=en-US&page=1`;
 
     try {
+      // Executes an asynchronous HTTP GET request, waits for the data, and parses the JSON stream
       const response = await fetch(url);
       const data = await response.json();
-      setResults(data.results);
+      setResults(data.results); // Maps the JSON array to the React state to trigger a UI render
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -41,7 +44,9 @@ export default function Movies() {
     }
   };
 
+  // CAPSTONE: ADD_MOVIE_LOGIC
   const handleAddToList = async (movieTitle) => {
+    // Checks the local React state array first to prevent unnecessary network calls for duplicates
     const isAlreadyInList = movieList?.some(movie => typeof movie === 'string' ? movie === movieTitle : movie.title === movieTitle);
     
     if (isAlreadyInList) {

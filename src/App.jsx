@@ -9,12 +9,15 @@ export default function App() {
 
   const [movieList, setMovieList] = useState([]);
 
-  // Exposed list: cleared automatically while there is no logged-in user.
+  // CAPSTONE: STATE_MEMOIZATION
+  // Exposed list: cleared automatically while there is no logged-in user to prevent rendering bugs.
   const visibleMovieList = useMemo(
     () => (isAuthenticated && currentUser ? movieList : []),
     [isAuthenticated, currentUser, movieList]
   );
 
+  // CAPSTONE: CART_HYDRATION
+  // Safely parses local storage with guarded try/catch to prevent fatal crashes from corrupt JSON  
   const [cart, setCart] = useState(() => {
     try {
       const savedCart = localStorage.getItem('cartItems');
@@ -32,17 +35,19 @@ export default function App() {
   }, [cart]);
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false; // CAPSTONE: FETCH_CANCELLATION - Prevents race conditions on rapid logout
 
     if (isAuthenticated && currentUser) {
       const fetchMovies = async () => {
         try {
           const response = await fetch(`http://127.0.0.1:8000/api/movies/${currentUser.id}`);
+          // CAPSTONE: NON_OK_RESPONSES - Explicitly catch bad HTTP statuses
           if (!response.ok) {
             throw new Error(`Request failed with status ${response.status}`);
           }
           const data = await response.json();
           if (!cancelled) {
+            // CAPSTONE: ARRAY_NORMALIZATION - Guarantees the payload is an array so .map() never crashes
             setMovieList(Array.isArray(data) ? data : []);
           }
         } catch (error) {

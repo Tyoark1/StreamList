@@ -6,10 +6,12 @@ export default function Subscriptions() {
   const { cart, setCart } = useOutletContext();
   const [warning, setWarning] = useState('');
 
+  // CAPSTONE: SINGLE_SUB_LOGIC
   const handleAddToCart = (item) => {
     const isSubscription = item.service.toLowerCase().includes("subscription");
 
     if (isSubscription) {
+      // Enforce business logic: Only one subscription allowed per cart
       const existingSubscription = cart.find((cartItem) => 
         cartItem.service.toLowerCase().includes("subscription")
       );

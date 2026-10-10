@@ -12,11 +12,15 @@ function formatExpiry(digits) {
   return clean.length > 2 ? `${clean.slice(0, 2)}/${clean.slice(2)}` : clean;
 }
 
+// CAPSTONE: CC_REGEX_VALIDATION
+// Uses a Regular Expression (Regex). The ^ and $ ensure the exact string is evaluated.
+  // \d{16} checks that the string contains exactly 16 numerical digits and nothing else.
 function isValidCardNumber(digits) {
   return /^\d{16}$/.test(digits);
 }
 
 function isValidExpiry(value) {
+  // Regex creates capture groups for MM and YY
   const match = /^(\d{2})\/(\d{2})$/.exec(value);
   if (!match) return false;
 
@@ -24,6 +28,7 @@ function isValidExpiry(value) {
   const year = 2000 + Number(match[2]);
   if (month < 1 || month > 12) return false;
 
+  // Calculates the absolute final millisecond of the given month and compares it to the current system time
   const endOfMonth = new Date(year, month, 1).getTime() - 1;
   return endOfMonth >= Date.now();
 }
@@ -110,6 +115,7 @@ export default function Checkout() {
     redirectTimer.current = setTimeout(() => {
       redirectTimer.current = null;
 
+      // CAPSTONE: CHECKOUT_REDIRECT      
       const purchasedPlan = cart?.find(item => {
         const itemService = (item?.service || '').toLowerCase();
         
@@ -121,7 +127,6 @@ export default function Checkout() {
                itemService.includes('subscription');
       });
 
-      // Extract the service name to save
       const planToSave = purchasedPlan?.service;
 
       if (planToSave) {
